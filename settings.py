@@ -1,11 +1,23 @@
 import os
 from dotenv import load_dotenv
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # thư mục chứa script
-dotenv_path = os.path.join(BASE_DIR, '..', '.env')     # lên 1 cấp
-load_dotenv(dotenv_path)
+def load_api_key():
+    # 1️⃣ Try to load from .env in local environment
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    dotenv_path = os.path.join(base_dir, '..', '.env')
 
-api_key = os.getenv('API_KEY')
+    if os.path.exists(dotenv_path):
+        load_dotenv(dotenv_path)
+
+    api_key = os.getenv("API_KEY")
+
+    if not api_key:
+        print("API_KEY not found. Please set it manually if running on Google Colab:")
+        print('   ➜ import os; os.environ["API_KEY"] = "YOUR_KEY_HERE"')
+
+    return api_key
+
+api_key = load_api_key()
 
 CONFIG = {
     "api_key": {api_key},
