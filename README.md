@@ -30,6 +30,7 @@ Finally, open and update your API key inside the .env file:
 
 ```bash
 nano ../.env
+API_KEY= your_api_key
 ```
 Press CTRL + O to save and CTRL + X to exit nano.
 
