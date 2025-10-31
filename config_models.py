@@ -58,11 +58,14 @@ def run_dbscan(df: pd.DataFrame, features: list, eps=1.2, min_samples=5) -> pd.S
     """
     NOTICE: DBSCAN is very sensitive to hyperparameters (eps, min_samples).
     """
+    # Scale region features
+    region_features = df[features]  # fill missing values
     scaler = StandardScaler()
-    scaled_features = scaler.fit_transform(df[features])
-
+    region_scaled = scaler.fit_transform(region_features)
+    
+    # Fit DBSCAN
     model = DBSCAN(eps=eps, min_samples=min_samples)
-    predictions = model.fit_predict(scaled_features)
+    predictions = model.fit_predict(region_scaled)
     # Convert -1 (noise/outlier) to 1, and others to 0
     return pd.Series(predictions, index=df.index).apply(lambda x: 1 if x == -1 else 0)
 
