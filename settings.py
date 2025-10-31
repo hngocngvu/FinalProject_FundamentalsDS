@@ -1,19 +1,9 @@
 import os
 from dotenv import load_dotenv
 
-import os
-
 def load_api_key():
-    api_key = None
+    api_key = os.getenv("API_KEY")
 
-    # ✅ Try to get API key from Google Colab Secrets first
-    try:
-        from google.colab import userdata
-        api_key = userdata.get('API_KEY')
-    except Exception:
-        pass
-
-    # ✅ If not found, try loading from .env (local running)
     if not api_key:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         dotenv_path = os.path.join(base_dir, '..', '.env')
@@ -21,15 +11,14 @@ def load_api_key():
             load_dotenv(dotenv_path)
             api_key = os.getenv("API_KEY")
 
-    # ❌ If still not found → show instruction
     if not api_key:
         print("API_KEY not found.")
-        print("If running on Colab: Add API_KEY in Secrets (left sidebar > 🔑 Secrets)")
-        print('Or set manually:')
+        print("For Google Colab, run this first:")
+        print('import os')
         print('os.environ["API_KEY"] = "YOUR_KEY_HERE"')
+        print("For local machine, ensure .env exists above this folder")
 
     return api_key
-
 
 api_key = load_api_key()
 
