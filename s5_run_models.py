@@ -49,12 +49,15 @@ def run_models():
         df.loc[region_mask, 'lof_anomaly'] = lof_predictions
         print(f"  [Model] Local Outlier Factor found {df.loc[region_mask, 'lof_anomaly'].sum()} outliers.")
 
-        # 2. Run DBSCAN for the region using its tuned hyperparameters
         params = best_dbscan_params[region]
         print(f"  [Model] Running DBSCAN with params: {params}")
-        predictions= run_dbscan(region_features, features_for_anomaly, eps=params['eps'], min_samples=params['min_samples'])
 
-        df.loc[region_mask, 'dbscan_anomaly'] = [1 if x == -1 else 0 for x in predictions]
+        # predictions đã là 0/1 với 1 = outlier từ run_dbscan
+        predictions = run_dbscan(region_features, features_for_anomaly, eps=params['eps'], min_samples=params['min_samples'])
+
+        # Gán trực tiếp vào dataframe
+        df.loc[region_mask, 'dbscan_anomaly'] = predictions
+
         print(f"  [Model] DBSCAN found {df.loc[region_mask, 'dbscan_anomaly'].sum()} outliers.")
 
         # 3. Run Isolation Forest for the region

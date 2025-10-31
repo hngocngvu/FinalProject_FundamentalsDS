@@ -14,43 +14,43 @@ def run_lof(df: pd.DataFrame, features: list, contamination=0.01) -> pd.Series:
     # Convert -1 (outlier) to 1, and 1 (inlier) to 0
     return pd.Series(predictions, index=df.index).apply(lambda x: 1 if x == -1 else 0)
 
-def tune_dbscan_hyperparameters(
-    df: pd.DataFrame, region_name: str, features: list, n_trials: int = 50, random_seed: int = 42
-) -> dict:
+def tune_dbscan_hyperparameters(df: pd.DataFrame, region_name: str, features: list, n_trials: int = 50) -> dict:
     """
-    Use Optuna to find the best DBSCAN hyperparameters for a specific region.
-    Returns dict: {'eps': ..., 'min_samples': ...}
+    Use Optuna to find the best hyperparameters for DBSCAN on a specific region.
     """
     print(f"\n--- Start hyperparameter tuning for DBSCAN in region {region_name} ---")
 
-    # 1️⃣ Scale features for this region
-    region_features = df[features]
+    # 1. Normalize features
     scaler = StandardScaler()
-    data_scaled = scaler.fit_transform(region_features)
+    data_scaled = scaler.fit_transform(df[features])
 
-    # 2️⃣ Define Optuna objective function
+    # 2. Define the objective function for Optuna
+    # Silhouette Score measure how well clusters are separated. Higher is better.
     def objective(trial):
-        eps = trial.suggest_float("eps", 0.5, 5.0, log=True)
-        min_samples = trial.suggest_int("min_samples", 5, 150)
+        eps = trial.suggest_float('eps', 0.5, 5.0, log=True) # Find eps in log scale
+        min_samples = trial.suggest_int('min_samples', 5, 150)
 
-        model = DBSCAN(eps=eps, min_samples=min_samples, n_jobs=1)  # n_jobs=1 for deterministic
+        # Run DBSCAN with suggested parameters
+        model = DBSCAN(eps=eps, min_samples=min_samples, n_jobs=8)
         labels = model.fit_predict(data_scaled)
 
-        # Silhouette score requires at least 2 clusters
-        if len(set(labels)) < 2 or all(l == -1 for l in labels):
-            return -1.0  # worst score for Optuna
+        # Handle case where DBSCAN finds no clusters (all noise or single cluster)
+        # Silhouette Score requires at least 2 clusters to compute.
+        if len(set(labels)) < 2:
+            return -1.0  # Return worst score so Optuna knows this is a bad choice
 
-        # Compute silhouette score
-        score = silhouette_score(data_scaled, labels, sample_size=min(10000, len(labels)), random_state=random_seed)
+        # Calculate and return Silhouette Score
+        score = silhouette_score(data_scaled, labels, sample_size=10000, random_state=42)
         return score
 
-    # 3️⃣ Run Optuna study
+    # 3. Run Optuna study
+    # 'direction="maximize"' since we want silhouette score to be as high as possible
     study = optuna.create_study(direction="maximize")
     study.optimize(objective, n_trials=n_trials)
 
     print(f"--- Complete fine-tuning for {region_name} ---")
     print(f"  Best Silhouette Score: {study.best_value:.4f}")
-    print(f"  Best parameters: {study.best_params}")
+    print(f"  The best parameters: {study.best_params}")
 
     return study.best_params
 
@@ -58,14 +58,11 @@ def run_dbscan(df: pd.DataFrame, features: list, eps=1.2, min_samples=5) -> pd.S
     """
     NOTICE: DBSCAN is very sensitive to hyperparameters (eps, min_samples).
     """
-    # Scale region features
-    region_features = df[features]  # fill missing values
     scaler = StandardScaler()
-    region_scaled = scaler.fit_transform(region_features)
-    
-    # Fit DBSCAN
+    scaled_features = scaler.fit_transform(df[features])
+
     model = DBSCAN(eps=eps, min_samples=min_samples)
-    predictions = model.fit_predict(region_scaled)
+    predictions = model.fit_predict(scaled_features)
     # Convert -1 (noise/outlier) to 1, and others to 0
     return pd.Series(predictions, index=df.index).apply(lambda x: 1 if x == -1 else 0)
 
