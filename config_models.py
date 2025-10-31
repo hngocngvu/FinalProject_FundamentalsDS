@@ -21,8 +21,9 @@ def tune_dbscan_hyperparameters(df: pd.DataFrame, region_name: str, features: li
     print(f"\n--- Start hyperparameter tuning for DBSCAN in region {region_name} ---")
 
     # 1. Normalize features
+    region_features = df[features]  # fill missing values
     scaler = StandardScaler()
-    data_scaled = scaler.fit_transform(df[features])
+    data_scaled = scaler.fit_transform(region_features)
 
     # 2. Define the objective function for Optuna
     # Silhouette Score measure how well clusters are separated. Higher is better.
