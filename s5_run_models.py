@@ -1,11 +1,11 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import DBSCAN
-from config_models import run_lof, run_isolation_forest, tune_dbscan_hyperparameters
+from config_models import run_lof, run_isolation_forest, tune_dbscan_hyperparameters, run_dbscan
 from settings import CONFIG
-from s3_save_data import save_data_pipeline
+from s3_save_data import df
 
-df = save_data_pipeline()
+
 contamination_rate = 0.01  # 1% anomalies
 features_for_anomaly = [f for f in CONFIG["features_for_model"] if 'price' not in f and f != 'net_demand_MW']
 features_for_anomaly = [f for f in features_for_anomaly if f in df.columns]
@@ -52,10 +52,8 @@ def run_models():
         # 2. Run DBSCAN for the region using its tuned hyperparameters
         params = best_dbscan_params[region]
         print(f"  [Model] Running DBSCAN with params: {params}")
-        scaler = StandardScaler()
-        region_features_scaled = scaler.fit_transform(region_features)
-        model = DBSCAN(eps=params['eps'], min_samples=params['min_samples'], n_jobs=-1)
-        predictions = model.fit_predict(region_features_scaled)
+        predictions= run_dbscan(region_features, features_for_anomaly, eps=params['eps'], min_samples=params['min_samples'])
+
         df.loc[region_mask, 'dbscan_anomaly'] = [1 if x == -1 else 0 for x in predictions]
         print(f"  [Model] DBSCAN found {df.loc[region_mask, 'dbscan_anomaly'].sum()} outliers.")
 
@@ -69,3 +67,4 @@ def run_models():
     print(f"Total LOF Anomalies: {df['lof_anomaly'].sum()}")
     print(f"Total DBSCAN Anomalies: {df['dbscan_anomaly'].sum()}")
     print(f"Total Isolation Forest Anomalies: {df['isolation_forest_anomaly'].sum()}")
+    df.to_csv("final_with_anomalies.csv", index=False)

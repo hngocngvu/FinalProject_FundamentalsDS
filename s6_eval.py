@@ -1,13 +1,30 @@
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 import numpy as np
-from s5_run_models import features_for_anomaly, contamination_rate
-from s3_save_data import save_data_pipeline
+from s5_run_models import features_for_anomaly, contamination_rate, run_models
+from s3_save_data import get_base_df, df
+import shap
+import os
 
-df = save_data_pipeline()
 
+def get_anomaly_df(df):
+    csv_path = "final_with_anomalies.csv"
+
+    # If already exists → load
+    if os.path.exists(csv_path):
+        print("✅ Loading anomaly dataset…")
+        return pd.read_csv(csv_path)
+
+    print("⚠️ No anomaly dataset → running models…")
+    df = get_base_df()
+    df = run_models()  # must save final_with_anomalies.csv inside
+    return pd.read_csv(csv_path)
+
+df = get_anomaly_df(df)
 
 model_cols = ['lof_anomaly', 'dbscan_anomaly', 'isolation_forest_anomaly']
+    
+
 
 def run_eval():
     # Overall anomaly counts
@@ -98,3 +115,41 @@ def run_eval():
             print(f"  SHAP analysis complete for {len(features_df)} anomalies in {region}.")
         else:
             print(f"  No anomalies detected by Isolation Forest in {region}; skipping SHAP analysis.")
+
+def compute_shap(df):
+    """Compute SHAP values separately for each region."""
+    all_shap_values = {}
+    all_features_df = {}
+    all_explainers = {}
+
+    for region in df['region'].unique():
+        print(f"\n--- SHAP for {region} ---")
+
+        region_df = df[df['region'] == region].copy()
+        anomalies_df = region_df[region_df['isolation_forest_anomaly'] == 1].copy()
+
+        if anomalies_df.empty:
+            print("  No anomalies. Skipping ✅")
+            continue
+
+        # Train region-specific model
+        model = IsolationForest(
+            n_estimators=200,
+            contamination=contamination_rate,
+            random_state=42
+        )
+        model.fit(region_df[features_for_anomaly])
+
+        features_df = anomalies_df[features_for_anomaly]
+        explainer = shap.Explainer(model, region_df[features_for_anomaly])
+        shap_values = explainer(features_df)
+
+        all_shap_values[region] = shap_values
+        all_features_df[region] = features_df
+        all_explainers[region] = explainer
+
+        print(f"  ✅ SHAP completed for {len(features_df)} anomaly points")
+
+    return all_shap_values, all_features_df, all_explainers
+
+all_shap_values, all_features_df, all_explainers = compute_shap(df)

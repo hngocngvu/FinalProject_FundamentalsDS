@@ -31,7 +31,7 @@ def tune_dbscan_hyperparameters(df: pd.DataFrame, region_name: str, features: li
         min_samples = trial.suggest_int('min_samples', 5, 150)
 
         # Run DBSCAN with suggested parameters
-        model = DBSCAN(eps=eps, min_samples=min_samples, n_jobs=8)
+        model = DBSCAN(eps=eps, min_samples=min_samples, n_jobs=2)
         labels = model.fit_predict(data_scaled)
 
         # Handle case where DBSCAN finds no clusters (all noise or single cluster)

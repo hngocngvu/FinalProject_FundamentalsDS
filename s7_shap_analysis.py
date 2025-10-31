@@ -2,10 +2,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import shap
 import pandas as pd
-from s5_run_models import model_cols, all_shap_values, all_features_df
-from s3_save_data import save_data_pipeline
+from s6_eval import model_cols
+from s6_eval import all_shap_values, all_features_df, all_explainers, get_anomaly_df,df
+import os
 
-df = save_data_pipeline()
+
+df = get_anomaly_df(df)
+
 def run_shap():
     def plot_anomalies_by_region(df: pd.DataFrame, model_cols: list, output_filename: str):
         """Plot the demand and outliers for each region."""
@@ -82,6 +85,7 @@ def run_shap():
             )
         else:
             print(f"\n--- No SHAP values to plot for {region} ---")
+
 
 if __name__ == "__main__":
     run_shap()

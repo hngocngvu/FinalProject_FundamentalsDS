@@ -2,11 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import shap
-from s5_run_models import model_cols, all_shap_values, all_explainers, all_features_df
+from s6_eval import model_cols, all_shap_values, all_explainers, all_features_df, get_anomaly_df, df
 from IPython.display import display
-from s3_save_data import save_data_pipeline
+import os
 
-df = save_data_pipeline()
+df= get_anomaly_df(df)
 print("--- Start deep analysis of anomalies ---")
 
 def deep_analyze_anomalies():

@@ -3,9 +3,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import skew, kurtosis, zscore
 from IPython.display import display
-from s3_save_data import save_data_pipeline
+from s3_save_data import df
 
-df = save_data_pipeline()
 print(f"Loaded dataset with {len(df)} rows.")
 
 def eda():

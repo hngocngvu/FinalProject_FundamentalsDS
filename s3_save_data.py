@@ -2,7 +2,7 @@ from settings import CONFIG
 from s1_extract_data import fetch_eia_data, fetch_weather
 from s2_fe import create_features
 import pandas as pd 
-
+import os
 
 def save_data_pipeline():
     """Pipeline to fetch, merge, create features, and save data for all regions."""
@@ -31,7 +31,22 @@ def save_data_pipeline():
     # Combine all regions
     combined_final_df = pd.concat(all_final_dfs, ignore_index=True)
     print(f"\nCombined final df has {len(combined_final_df)} rows.")
+    print(f"Columns in final df: {combined_final_df.columns.tolist()}")
 
     # Save file
     combined_final_df.to_csv("final_dataset.csv", index=False)
     return combined_final_df
+
+def get_base_df():
+    csv_path = "final_dataset.csv"
+
+    if os.path.exists(csv_path):
+        print("Loading base dataset (no anomalies)…")
+        return pd.read_csv(csv_path)
+
+    print("📥 Base dataset missing → running pipeline…")
+    df = save_data_pipeline()
+    df.to_csv(csv_path, index=False)
+    return df
+
+df = get_base_df()
