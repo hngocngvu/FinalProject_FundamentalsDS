@@ -1,0 +1,12 @@
+pandas
+numpy
+matplotlib
+seaborn
+ipython
+python-dotenv
+requests
+scipy
+optuna
+scikit-learn
+holidays
+shap
