@@ -48,7 +48,7 @@ def create_features(df: pd.DataFrame, features_for_model: list) -> pd.DataFrame:
     for target in targets:
         if target not in df.columns:
             continue
-        for lag in [24, 48, 168]:
+        for lag in [24, 168]:
             df[f'{target}_lag_{lag}h'] = df[target].shift(lag)
         df[f'{target}_rolling_mean_24h'] = df[target].rolling(window=24, min_periods=1).mean()
         df[f'{target}_rolling_std_24h'] = df[target].rolling(window=24, min_periods=1).std().fillna(0)
