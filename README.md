@@ -1,6 +1,6 @@
 # FinalProject_FundamentalsDS
 Detecting Anomalies in Regional
-Electricity Usage: Case Study of California and Texas
+Electricity Demand: Case Study of California and Texas
 
 Description: This study examines electricity demand anomalies in two U.S. regions: ERCOT (Texas) and
 CAISO (California) by applying three unsupervised machine learning models: Local Outlier
